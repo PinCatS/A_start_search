@@ -34,6 +34,7 @@ def shortest_path(M, start, goal):
         state = heapq.heappop(frontier)
         
         if goal_test(state.point, goal):
+            # reconstruct the path
             path = []
             while state:
                 path.append(state.point)
@@ -45,7 +46,7 @@ def shortest_path(M, start, goal):
             next_point_distance = state.distance + distance(state.point, next_point)
             estimated_cost = next_point_distance + distance_to_goal(next_point, goal)
             next_state = State(estimated_cost, next_point_distance, next_point)
-            if  next_state not in came_from:
+            if next_state not in came_from:
                 came_from[next_state] = state
                 heapq.heappush(frontier, next_state)
 
