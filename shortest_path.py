@@ -1,46 +1,50 @@
 import math
 import heapq
+from collections import namedtuple
 
-def goal_test(s, g):
-    return s == g
-
-# geometric distance: sqrt(a^2 + b^2)
-def distance(s1, s2):
-    return math.sqrt((s1[0]-s2[0])**2 + (s1[1]-s2[1])**2)
-
-# the heuristic function
-# it is admissible because of the triangle equality: a + b > h
-def distance_to_goal(s, g):
-    return distance(s, g)
+State = namedtuple('State', ['estimated_cost', 'distance', 'point'])
 
 # how to accumulate cost for s
 # how to save path
 def shortest_path(M, start, goal):
+    # geometric distance: sqrt(a^2 + b^2)
+    def distance(s1, s2):
+        s1_x, s1_y = M.intersections[s1]
+        s2_x, s2_y = M.intersections[s2]
+        return math.sqrt((s1_x - s2_x)**2 + (s1_y - s2_y)**2)
+    
+    # the heuristic function
+    # it is admissible because of the triangle equality: a + b > h
+    def distance_to_goal(s, g):
+        return distance(s, g)
+    
+    def goal_test(s, g):
+        return s == g
+
     came_from = {}
     path = []
     
-    s0_xy = M.intersections[start]
-    g_xy = M.intersections[goal]
-    min_cost = distance(s0_xy, s0_xy) + distance_to_goal(s0_xy, g_xy)
-    frontier = [(min_cost, 0, start)]
-    came_from[(min_cost, 0, start)] = None
+    estimated_cost = distance(start, start) + distance_to_goal(start, goal)
+    initial_state = State(estimated_cost, 0, start)
+
+    frontier = [initial_state]
+    came_from[initial_state] = None
 
     while frontier:
-        min_value, current_cost, s1 = heapq.heappop(frontier)
-        if goal_test(s1, goal):
-            p = (min_value, current_cost, s1)
-            while p:
-                path.append(p[2])
-                p = came_from[p]
+        state = heapq.heappop(frontier)
+        if goal_test(state.point, goal):
+            while state:
+                path.append(state.point)
+                state = came_from[state]
             return list(reversed(path))
 
-        for s2 in M.roads[s1]:
-            s2_cost = current_cost + distance(M.intersections[s1], M.intersections[s2])
-            s2_estimated_cost = distance(M.intersections[s1], g_xy)
-            s2_min_value = s2_cost + s2_estimated_cost
-            if  (s2_min_value, s2_cost, s2) not in came_from:
-                came_from[(s2_min_value, s2_cost, s2)] = (min_value, current_cost, s1)
-                heapq.heappush(frontier, (s2_min_value, s2_cost, s2))
+        for next_point in M.roads[state.point]:
+            next_point_distance = state.distance + distance(state.point, next_point)
+            estimated_cost = next_point_distance + distance_to_goal(next_point, goal)
+            next_state = State(estimated_cost, next_point_distance, next_point)
+            if  next_state not in came_from:
+                came_from[next_state] = state
+                heapq.heappush(frontier, next_state)
 
     return []
 
