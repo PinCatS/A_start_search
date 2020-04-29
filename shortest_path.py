@@ -4,26 +4,26 @@ from collections import namedtuple
 
 State = namedtuple('State', ['estimated_cost', 'distance', 'point'])
 
-# how to accumulate cost for s
-# how to save path
+
 def shortest_path(M, start, goal):
-    # geometric distance: sqrt(a^2 + b^2)
+    # euclidean distance: sqrt(a^2 + b^2)
     def distance(s1, s2):
         s1_x, s1_y = M.intersections[s1]
         s2_x, s2_y = M.intersections[s2]
         return math.sqrt((s1_x - s2_x)**2 + (s1_y - s2_y)**2)
     
     # the heuristic function
-    # it is admissible because of the triangle equality: a + b > h
+    # it is admissible because of the triangle equality: a + b >= h
     def distance_to_goal(s, g):
         return distance(s, g)
     
     def goal_test(s, g):
         return s == g
 
+    # used both for keeping if state was explored and keep track of parent state
     came_from = {}
-    path = []
     
+    # f(s) = g(s) + h(s) - estimated cost
     estimated_cost = distance(start, start) + distance_to_goal(start, goal)
     initial_state = State(estimated_cost, 0, start)
 
@@ -32,13 +32,16 @@ def shortest_path(M, start, goal):
 
     while frontier:
         state = heapq.heappop(frontier)
+        
         if goal_test(state.point, goal):
+            path = []
             while state:
                 path.append(state.point)
                 state = came_from[state]
             return list(reversed(path))
 
         for next_point in M.roads[state.point]:
+            # next_point_distance = accumulated distance from the initial point to next_point
             next_point_distance = state.distance + distance(state.point, next_point)
             estimated_cost = next_point_distance + distance_to_goal(next_point, goal)
             next_state = State(estimated_cost, next_point_distance, next_point)
