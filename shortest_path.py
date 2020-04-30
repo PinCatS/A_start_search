@@ -13,7 +13,7 @@ def shortest_path(M, start, goal):
         return math.sqrt((s1_x - s2_x)**2 + (s1_y - s2_y)**2)
     
     # the heuristic function
-    # it is admissible because of the triangle equality: a + b >= h
+    # it is optimistic because of the triangle equality: a + b >= h
     def distance_to_goal(s, g):
         return distance(s, g)
     
@@ -46,7 +46,7 @@ def shortest_path(M, start, goal):
             next_point_distance = state.distance + distance(state.point, next_point)
             estimated_cost = next_point_distance + distance_to_goal(next_point, goal)
             next_state = State(estimated_cost, next_point_distance, next_point)
-            if next_state not in came_from:
+            if not (next_state in came_from or next_point_distance < state.distance):
                 came_from[next_state] = state
                 heapq.heappush(frontier, next_state)
 
